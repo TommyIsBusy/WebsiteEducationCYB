@@ -1,0 +1,110 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta http-equiv="Content-Style-Type" content="text/css">
+  <title></title>
+  <meta name="Generator" content="Cocoa HTML Writer">
+  <meta name="CocoaVersion" content="2575.4">
+  <style type="text/css">
+    p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica}
+    p.p2 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica; min-height: 14.0px}
+  </style>
+</head>
+<body>
+<p class="p1">let publicKey = null;<span class="Apple-converted-space">  </span>// Store public key</p>
+<p class="p1">let privateKey = null; // Store private key</p>
+<p class="p2"><br></p>
+<p class="p1">// Generate RSA Key Pair (for illustration purposes, using Web Cryptography API)</p>
+<p class="p1">async function generateKeyPair() {</p>
+<p class="p1"><span class="Apple-converted-space">    </span>try {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>const keyPair = await window.crypto.subtle.generateKey(</p>
+<p class="p1"><span class="Apple-converted-space">            </span>{</p>
+<p class="p1"><span class="Apple-converted-space">                </span>name: "RSA-OAEP",</p>
+<p class="p1"><span class="Apple-converted-space">                </span>modulusLength: 2048,</p>
+<p class="p1"><span class="Apple-converted-space">                </span>publicExponent: new Uint8Array([1, 0, 1]),</p>
+<p class="p1"><span class="Apple-converted-space">                </span>hash: "SHA-256"</p>
+<p class="p1"><span class="Apple-converted-space">            </span>},</p>
+<p class="p1"><span class="Apple-converted-space">            </span>true, // extractable</p>
+<p class="p1"><span class="Apple-converted-space">            </span>["encrypt", "decrypt"]</p>
+<p class="p1"><span class="Apple-converted-space">        </span>);</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>publicKey = keyPair.publicKey;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>privateKey = keyPair.privateKey;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>alert("Key pair generated successfully!");</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>// Display the public key</p>
+<p class="p1"><span class="Apple-converted-space">        </span>const exportedPublicKey = await window.crypto.subtle.exportKey("spki", publicKey);</p>
+<p class="p1"><span class="Apple-converted-space">        </span>const publicKeyPem = arrayBufferToPem(exportedPublicKey);</p>
+<p class="p1"><span class="Apple-converted-space">        </span>document.getElementById("key-list").innerHTML = `&lt;strong&gt;Public Key:&lt;/strong&gt;&lt;pre&gt;${publicKeyPem}&lt;/pre&gt;`;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>} catch (err) {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>console.error(err);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p1">}</p>
+<p class="p2"><br></p>
+<p class="p1">// Helper to convert ArrayBuffer to PEM format</p>
+<p class="p1">function arrayBufferToPem(buffer) {</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const binary = String.fromCharCode.apply(null, new Uint8Array(buffer));</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const base64 = window.btoa(binary);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>return `-----BEGIN PUBLIC KEY-----\n${base64.match(/.{1,64}/g).join("\n")}\n-----END PUBLIC KEY-----`;</p>
+<p class="p1">}</p>
+<p class="p2"><br></p>
+<p class="p1">// Import public key</p>
+<p class="p1">function importPublicKey() {</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const publicKeyPem = prompt("Paste your public key in PEM format:");</p>
+<p class="p1"><span class="Apple-converted-space">    </span>if (publicKeyPem) {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>const binaryDer = window.atob(publicKeyPem.replace(/-----BEGIN PUBLIC KEY-----|\n|-----END PUBLIC KEY-----/g, ""));</p>
+<p class="p1"><span class="Apple-converted-space">        </span>const buffer = new ArrayBuffer(binaryDer.length);</p>
+<p class="p1"><span class="Apple-converted-space">        </span>const view = new Uint8Array(buffer);</p>
+<p class="p1"><span class="Apple-converted-space">        </span>for (let i = 0; i &lt; binaryDer.length; i++) {</p>
+<p class="p1"><span class="Apple-converted-space">            </span>view[i] = binaryDer.charCodeAt(i);</p>
+<p class="p1"><span class="Apple-converted-space">        </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>window.crypto.subtle.importKey(</p>
+<p class="p1"><span class="Apple-converted-space">            </span>"spki", buffer, { name: "RSA-OAEP", hash: "SHA-256" }, true, ["encrypt"]</p>
+<p class="p1"><span class="Apple-converted-space">        </span>).then((importedKey) =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">            </span>publicKey = importedKey;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>alert("Public Key Imported!");</p>
+<p class="p1"><span class="Apple-converted-space">        </span>}).catch((err) =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">            </span>console.error(err);</p>
+<p class="p1"><span class="Apple-converted-space">        </span>});</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p1">}</p>
+<p class="p2"><br></p>
+<p class="p1">// Encrypt content using public key</p>
+<p class="p1">async function encryptContent() {</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const content = document.getElementById("content").value;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>if (!publicKey) {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>alert("No public key available for encryption.");</p>
+<p class="p1"><span class="Apple-converted-space">        </span>return;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>try {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>const encodedContent = new TextEncoder().encode(content);</p>
+<p class="p1"><span class="Apple-converted-space">        </span>const encryptedContent = await window.crypto.subtle.encrypt(</p>
+<p class="p1"><span class="Apple-converted-space">            </span>{ name: "RSA-OAEP" },</p>
+<p class="p1"><span class="Apple-converted-space">            </span>publicKey,</p>
+<p class="p1"><span class="Apple-converted-space">            </span>encodedContent</p>
+<p class="p1"><span class="Apple-converted-space">        </span>);</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>const encryptedBase64 = arrayBufferToBase64(encryptedContent);</p>
+<p class="p1"><span class="Apple-converted-space">        </span>document.getElementById("encrypted-content").innerText = `Encrypted content:\n${encryptedBase64}`;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>} catch (err) {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>console.error(err);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p1">}</p>
+<p class="p2"><br></p>
+<p class="p1">// Convert ArrayBuffer to Base64</p>
+<p class="p1">function arrayBufferToBase64(buffer) {</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const binary = String.fromCharCode.apply(null, new Uint8Array(buffer));</p>
+<p class="p1"><span class="Apple-converted-space">    </span>return window.btoa(binary);</p>
+<p class="p1">}</p>
+<p class="p2"><br></p>
+<p class="p1">// Toggle commit signing status</p>
+<p class="p1">document.getElementById("sign-commits").addEventListener("change", (e) =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const statusText = e.target.checked ? "Active" : "Not Active";</p>
+<p class="p1"><span class="Apple-converted-space">    </span>document.getElementById("commit-signing-status").innerHTML = `Commit signing status: &lt;strong&gt;${statusText}&lt;/strong&gt;`;</p>
+<p class="p1">});</p>
+</body>
+</html>
